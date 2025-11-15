@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gri-Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Dark Mode 样式 */
+        body.dark-mode {
+            background: #1a1a1a;
+        }
+
+        body.dark-mode .container {
+            background: #2a2a2a;
+        }
+
+        body.dark-mode .title {
+            color: #ffffff;
+        }
+
+        body.dark-mode .canvas-area {
+            background: #333333;
+        }
+
+        body.dark-mode .control-panel {
+            background: #2a2a2a;
+        }
+
+        body.dark-mode .section-title {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .label {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .input {
+            background: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .input:focus {
+            border-color: #5a9fd4;
+        }
+
+        body.dark-mode .input[readonly] {
+            background-color: #333;
+        }
+
+        body.dark-mode .unit {
+            color: #888;
+        }
+
+        body.dark-mode .zoom-btn,
+        body.dark-mode .zoom-display {
+            background: #3a3a3a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .zoom-btn:hover {
+            background: #444;
+            border-color: #666;
+        }
+
+        body.dark-mode .canvas {
+            background: #ffffff;
+        }
+
+        body.dark-mode .control-panel::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+
+        body.dark-mode .control-panel::-webkit-scrollbar-thumb {
+            background: #555;
+        }
+
+        body.dark-mode .control-panel::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        .container {
+            width: 100%;
+            min-height: calc(100vh + 360px);
+            position: relative;
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 4px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: #3a3a3a;
+            border-color: #555;
+        }
+
+        .theme-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .theme-option:hover {
+            background: #f0f0f0;
+        }
+
+        body.dark-mode .theme-option:hover {
+            background: #444;
+        }
+
+        .theme-option.active {
+            background: #007bff;
+        }
+
+        body.dark-mode .theme-option.active {
+            background: #5a9fd4;
+        }
+
+        .theme-option.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: currentColor;
+            border-radius: 50%;
+        }
+
+        /* 页面边距 */
+        .page-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 标题区域 */
+        .header {
+            height: 340px;
+            display: flex;
+            align-items: center;
+            margin: 0 20px;
+            position: relative;
+        }
+
+
+        .title {
+            font-family: 'Urbanist', sans-serif;
+            font-weight: 100;
+            font-size: 220px;
+            line-height: 150px;
+            color: #000;
+            transition: color 0.3s ease;
+        }
+
+        .title-line1 {
+            display: block;
+        }
+
+        .title-line2 {
+            display: block;
+            text-indent: 40px;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            margin: 0 0 -20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            position: sticky;
+            top: 0;
+        }
+
+        body.dark-mode .main-content {
+            background: #2a2a2a;
+        }
+
+        /* 左侧画布区域 */
+        .canvas-area {
+            flex: 1;
+            background: #e5e5e5;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+            min-height: 0;
+        }
+
+        /* 缩放控制按钮 */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: 300;
+            color: #333;
+            transition: all 0.2s, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            user-select: none;
+        }
+
+        .zoom-btn:hover {
+            background: #f8f8f8;
+            border-color: #999;
+        }
+
+        .zoom-btn:active {
+            background: #e8e8e8;
+            transform: scale(0.95);
+        }
+
+        .zoom-display {
+            width: 60px;
+            height: 36px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+            text-align: center;
+            padding: 0 4px;
+            font-family: 'Urbanist', sans-serif;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        .zoom-display:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .canvas-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transform-origin: center;
+        }
+
+        .canvas-container.animating {
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .canvas {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .canvas-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        body.dark-mode .canvas-grid {
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.2) 1px, transparent 1px);
+        }
+
+        /* 右侧控制面板 */
+        .control-panel {
+            width: 500px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #666;
+            min-width: 60px;
+            transition: color 0.3s ease;
+        }
+
+        .input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Urbanist', sans-serif;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .input[readonly] {
+            background-color: #f5f5f5;
+            cursor: default;
+        }
+
+        .unit {
+            font-size: 12px;
+            color: #999;
+            min-width: 30px;
+        }
+
+        /* 滑杆样式 */
+        .slider {
+            flex: 1;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slider:disabled::-webkit-slider-thumb {
+            cursor: not-allowed;
+            background: #999;
+        }
+
+        .slider:disabled::-moz-range-thumb {
+            cursor: not-allowed;
+            background: #999;
+        }
+
+        /* Margin 控制样式 */
+        .margin-grid {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .margin-column {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .margin-controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .margin-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .margin-control .label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .margin-control .label {
+            color: #b0b0b0;
+        }
+
+        .stepper {
+            display: flex;
+            align-items: stretch;
+            height: 32px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+            max-width: 160px;
+        }
+
+        .stepper-btn {
+            flex: 0 0 32px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 300;
+            color: #333;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .stepper-btn:first-child {
+            border-right: 1px solid #ddd;
+        }
+
+        .stepper-btn:last-child {
+            border-left: 1px solid #ddd;
+        }
+
+        .stepper-btn:hover {
+            background: #f8f8f8;
+        }
+
+        .stepper-btn:active {
+            background: #e8e8e8;
+            transform: scale(0.95);
+        }
+
+        .stepper-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        body.dark-mode .stepper {
+            border-color: #555;
+        }
+
+        body.dark-mode .stepper-btn {
+            background: #3a3a3a;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        body.dark-mode .stepper-btn:hover {
+            background: #444;
+        }
+
+        .margin-input {
+            flex: 1;
+            text-align: center;
+            padding: 6px;
+            border: none;
+            background: transparent;
+            min-width: 35px;
+            font-size: 13px;
+        }
+
+        .stepper .unit {
+            padding: 0 6px;
+            display: flex;
+            align-items: center;
+            color: #999;
+            font-size: 11px;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .stepper .unit {
+            color: #888;
+        }
+
+        /* Margin 锁定按钮 */
+        .margin-lock {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding-right: 30px;
+        }
+
+        .lock-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            user-select: none;
+            padding: 7px;
+        }
+
+        .lock-btn svg {
+            width: 100%;
+            height: 100%;
+            color: #666;
+            transition: color 0.2s, transform 0.2s;
+            transform: rotate(-45deg);
+        }
+
+        .lock-btn:hover {
+            background: #f8f8f8;
+            border-color: #999;
+        }
+
+        .lock-btn:hover svg {
+            color: #333;
+        }
+
+        .lock-btn.locked {
+            background: #007bff;
+            border-color: #007bff;
+        }
+
+        .lock-btn.locked svg {
+            color: white;
+        }
+
+        body.dark-mode .lock-btn {
+            background: #3a3a3a;
+            border-color: #555;
+        }
+
+        body.dark-mode .lock-btn svg {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .lock-btn:hover {
+            background: #444;
+            border-color: #666;
+        }
+
+        body.dark-mode .lock-btn:hover svg {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .lock-btn.locked {
+            background: #5a9fd4;
+            border-color: #5a9fd4;
+        }
+
+        body.dark-mode .lock-btn.locked svg {
+            color: white;
+        }
+
+        /* Canvas margin 显示为线 */
+        .canvas-margin {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        /* Canvas columns/rows 容器 */
+        .canvas-columns,
+        .canvas-rows {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Column 线（纵向，垂直线）*/
+        .column-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #00ffff;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Row 线（横向，水平线）*/
+        .row-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #00ffff;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .canvas-margin.left {
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ff0080;
+            border: none;
+        }
+
+        .canvas-margin.right {
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ff0080;
+            border: none;
+        }
+
+        .canvas-margin.top {
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 2px;
+            background: #ff0080;
+            border: none;
+        }
+
+        .canvas-margin.bottom {
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            background: #ff0080;
+            border: none;
+        }
+
+        /* 滚动条样式 */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 主题切换 -->
+        <div class="theme-toggle">
+            <button class="theme-option" data-theme="auto" title="跟随系统">🌓</button>
+            <button class="theme-option" data-theme="light" title="亮色模式">☀️</button>
+            <button class="theme-option" data-theme="dark" title="暗色模式">🌙</button>
+        </div>
+
+        <div class="page-content">
+            <!-- 标题区域 -->
+            <div class="header">
+                <h1 class="title">
+                    <span class="title-line1">Gri-</span>
+                    <span class="title-line2">Designer</span>
+                </h1>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="main-content">
+                <!-- 左侧画布区域 -->
+                <div class="canvas-area" id="canvasArea">
+                    <div class="canvas-container" id="canvasContainer">
+                        <div class="canvas" id="canvas">
+                            <div class="canvas-margin left" id="marginLeftVis"></div>
+                            <div class="canvas-margin right" id="marginRightVis"></div>
+                            <div class="canvas-margin top" id="marginTopVis"></div>
+                            <div class="canvas-margin bottom" id="marginBottomVis"></div>
+                            <div class="canvas-grid"></div>
+                            <div class="canvas-columns" id="canvasColumns"></div>
+                            <div class="canvas-rows" id="canvasRows"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 缩放控制 -->
+                    <div class="zoom-controls">
+                        <div class="zoom-btn" id="focusCanvas" title="适配画布">⊙</div>
+                        <div class="zoom-btn" id="zoomOut">−</div>
+                        <input type="text" class="zoom-display" id="zoomDisplay" value="100%">
+                        <div class="zoom-btn" id="zoomIn">+</div>
+                    </div>
+                </div>
+
+                <!-- 右侧控制面板 -->
+                <div class="control-panel">
+                    <!-- Page Size Section -->
+                    <div class="section">
+                        <div class="section-title">Page Size</div>
+                        <div class="input-row">
+                            <span class="label">Width</span>
+                            <input type="number" class="input" id="pageWidth" value="792" min="50" max="2000" step="1">
+                            <span class="unit">pt</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="label">Height</span>
+                            <input type="number" class="input" id="pageHeight" value="1224" min="50" max="2000" step="1">
+                            <span class="unit">pt</span>
+                        </div>
+                    </div>
+
+                    <!-- Module Section -->
+                    <div class="section">
+                        <div class="section-title">Module</div>
+                        <div class="input-row">
+                            <input type="range" class="slider" id="moduleSlider" min="0" max="0" value="0" step="1">
+                            <input type="text" class="input" id="moduleDisplay" value="-" readonly style="width: 60px; text-align: center;">
+                                <span class="unit">pt</span>
+                            </div>
+                            </div>
+
+                    <!-- Grid Size Section -->
+                    <div class="section">
+                        <div class="section-title">Grid Size</div>
+                        <div class="input-row">
+                            <input type="range" class="slider" id="gridSizeSlider" min="0" max="0" value="0" step="1">
+                            <input type="text" class="input" id="gridSizeDisplay" value="-" readonly style="width: 60px; text-align: center;">
+                                <span class="unit">pt</span>
+                        </div>
+                    </div>
+
+                    <!-- Margin Section -->
+                    <div class="section">
+                        <div class="section-title">Margin</div>
+                        <div class="margin-grid">
+                            <!-- Left/Right Column -->
+                            <div class="margin-column">
+                                <div class="margin-controls-wrapper">
+                                    <div class="margin-control">
+                                        <span class="label">Left</span>
+                                        <div class="stepper">
+                                            <button class="stepper-btn" data-margin="left" data-dir="-1">−</button>
+                                            <input type="text" class="input margin-input" id="marginLeft" value="0" readonly>
+                            <span class="unit">pt</span>
+                                            <button class="stepper-btn" data-margin="left" data-dir="1">+</button>
+                        </div>
+                        </div>
+                                    <div class="margin-control">
+                                        <span class="label">Right</span>
+                                        <div class="stepper">
+                                            <button class="stepper-btn" data-margin="right" data-dir="-1">−</button>
+                                            <input type="text" class="input margin-input" id="marginRight" value="0" readonly>
+                            <span class="unit">pt</span>
+                                            <button class="stepper-btn" data-margin="right" data-dir="1">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="margin-lock">
+                                    <button class="lock-btn" id="lockHorizontal" title="锁定左右">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="icon-unlocked"><rect width="256" height="256" fill="none"/><path d="M192,120l12.28-11.72a40,40,0,0,0-56.56-56.56L136,64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M64,136,51.72,147.72a40,40,0,0,0,56.56,56.56L120,192" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="192" y1="160" x2="216" y2="160" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="96" x2="64" y2="96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="160" y1="192" x2="160" y2="216" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="96" y1="40" x2="96" y2="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="icon-locked" style="display: none;"><rect width="256" height="256" fill="none"/><path d="M141.38,64.68l11-11a46.62,46.62,0,0,1,65.94,0h0a46.62,46.62,0,0,1,0,65.94L193.94,144,183.6,154.34a46.63,46.63,0,0,1-66-.05h0A46.48,46.48,0,0,1,104,120.06" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M114.62,191.32l-11,11a46.63,46.63,0,0,1-66-.05h0a46.63,46.63,0,0,1,.06-65.89L72.4,101.66a46.62,46.62,0,0,1,65.94,0h0A46.45,46.45,0,0,1,152,135.94" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+                                    </button>
+                        </div>
+                    </div>
+
+                            <!-- Top/Bottom Column -->
+                            <div class="margin-column">
+                                <div class="margin-controls-wrapper">
+                                    <div class="margin-control">
+                                        <span class="label">Top</span>
+                                        <div class="stepper">
+                                            <button class="stepper-btn" data-margin="top" data-dir="-1">−</button>
+                                            <input type="text" class="input margin-input" id="marginTop" value="0" readonly>
+                            <span class="unit">pt</span>
+                                            <button class="stepper-btn" data-margin="top" data-dir="1">+</button>
+                        </div>
+                        </div>
+                                    <div class="margin-control">
+                                        <span class="label">Bottom</span>
+                                        <div class="stepper">
+                                            <button class="stepper-btn" data-margin="bottom" data-dir="-1">−</button>
+                                            <input type="text" class="input margin-input" id="marginBottom" value="0" readonly>
+                            <span class="unit">pt</span>
+                                            <button class="stepper-btn" data-margin="bottom" data-dir="1">+</button>
+                        </div>
+                    </div>
+                        </div>
+                                <div class="margin-lock">
+                                    <button class="lock-btn" id="lockVertical" title="锁定上下">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="icon-unlocked"><rect width="256" height="256" fill="none"/><path d="M192,120l12.28-11.72a40,40,0,0,0-56.56-56.56L136,64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M64,136,51.72,147.72a40,40,0,0,0,56.56,56.56L120,192" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="192" y1="160" x2="216" y2="160" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="96" x2="64" y2="96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="160" y1="192" x2="160" y2="216" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="96" y1="40" x2="96" y2="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="icon-locked" style="display: none;"><rect width="256" height="256" fill="none"/><path d="M141.38,64.68l11-11a46.62,46.62,0,0,1,65.94,0h0a46.62,46.62,0,0,1,0,65.94L193.94,144,183.6,154.34a46.63,46.63,0,0,1-66-.05h0A46.48,46.48,0,0,1,104,120.06" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><path d="M114.62,191.32l-11,11a46.63,46.63,0,0,1-66-.05h0a46.63,46.63,0,0,1,.06-65.89L72.4,101.66a46.62,46.62,0,0,1,65.94,0h0A46.45,46.45,0,0,1,152,135.94" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>
+                                    </button>
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column/Row Section -->
+                    <div class="section">
+                        <div class="section-title">Column/Row</div>
+                        
+                        <!-- Column Controls -->
+                        <div class="input-group">
+                            <div class="input-row">
+                                <span class="label" style="min-width: 120px;">Column Spacing</span>
+                                <div class="stepper" style="max-width: 160px;">
+                                    <button class="stepper-btn" id="columnSpacingDown">−</button>
+                                    <input type="text" class="input margin-input" id="columnSpacing" value="-" readonly>
+                                    <span class="unit">pt</span>
+                                    <button class="stepper-btn" id="columnSpacingUp">+</button>
+                                </div>
+                            </div>
+                            <div class="input-row">
+                                <span class="label" style="min-width: 120px;">Column Number</span>
+                                <input type="range" class="slider" id="columnSlider" min="0" max="0" value="0" step="1" disabled>
+                                <input type="text" class="input" id="columnDisplay" value="-" readonly style="width: 60px; text-align: center;">
+                            </div>
+                        </div>
+                        
+                        <!-- Row Controls -->
+                        <div class="input-group">
+                            <div class="input-row">
+                                <span class="label" style="min-width: 120px;">Row Spacing</span>
+                                <div class="stepper" style="max-width: 160px;">
+                                    <button class="stepper-btn" id="rowSpacingDown">−</button>
+                                    <input type="text" class="input margin-input" id="rowSpacing" value="-" readonly>
+                                    <span class="unit">pt</span>
+                                    <button class="stepper-btn" id="rowSpacingUp">+</button>
+                                </div>
+                            </div>
+                            <div class="input-row">
+                                <span class="label" style="min-width: 120px;">Row Number</span>
+                                <input type="range" class="slider" id="rowSlider" min="0" max="0" value="0" step="1" disabled>
+                                <input type="text" class="input" id="rowDisplay" value="-" readonly style="width: 60px; text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class GriDesigner {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.canvasContainer = document.getElementById('canvasContainer');
+                this.scale = 1;
+                this.isDragging = false;
+                this.lastX = 0;
+                this.lastY = 0;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.moduleOptions = [];
+                this.currentModule = null;
+                this.gridSizeOptions = [];
+                this.currentGridSize = null;
+                this.margins = { left: 0, top: 0, right: 0, bottom: 0 };
+                this.marginLocks = { horizontal: true, vertical: true };
+                this.currentTheme = 'auto'; // 'auto', 'light', 'dark'
+                
+                // Column/Row 相关
+                this.columnSpacing = null;  // 默认为 grid size
+                this.rowSpacing = null;     // 默认为 grid size
+                this.columnOptions = [];
+                this.rowOptions = [];
+                this.currentColumnNumber = null;
+                this.currentRowNumber = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupTheme();
+                this.setupEventListeners();
+                this.setupCanvas();
+            }
+
+            setupTheme() {
+                // 从 localStorage 读取保存的主题设置
+                const savedTheme = localStorage.getItem('theme') || 'auto';
+                this.currentTheme = savedTheme;
+                
+                // 应用主题
+                this.applyTheme(savedTheme);
+                
+                // 监听系统主题变化
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaQuery.addEventListener('change', (e) => {
+                    if (this.currentTheme === 'auto') {
+                        this.applyTheme('auto');
+                    }
+                });
+                
+                // 设置主题按钮事件
+                document.querySelectorAll('.theme-option').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const theme = e.currentTarget.getAttribute('data-theme');
+                        this.setTheme(theme);
+                    });
+                });
+            }
+
+            setTheme(theme) {
+                this.currentTheme = theme;
+                localStorage.setItem('theme', theme);
+                this.applyTheme(theme);
+            }
+
+            applyTheme(theme) {
+                const body = document.body;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.theme-option').forEach(btn => {
+                    if (btn.getAttribute('data-theme') === theme) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // 应用主题
+                if (theme === 'dark') {
+                    body.classList.add('dark-mode');
+                } else if (theme === 'light') {
+                    body.classList.remove('dark-mode');
+                } else if (theme === 'auto') {
+                    // 跟随系统
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) {
+                        body.classList.add('dark-mode');
+                    } else {
+                        body.classList.remove('dark-mode');
+                    }
+                }
+            }
+
+            setupEventListeners() {
+                // 画布缩放 - 速度与滚轮量成正比
+                this.canvasContainer.parentElement.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    // 计算缩放增量，与滚动量成正比
+                    const zoomSpeed = 0.001; // 调整这个值来控制整体缩放速度
+                    const deltaScale = -e.deltaY * zoomSpeed; // 负号是因为deltaY向下为正，我们要放大
+                    this.scale += this.scale * deltaScale; // 按当前缩放的百分比增减
+                    this.scale = Math.max(0.05, Math.min(5, this.scale));
+                    this.updateCanvasTransform();
+                    this.updateZoomDisplay();
+                });
+
+                // 画布拖拽
+                this.canvasContainer.parentElement.addEventListener('mousedown', (e) => {
+                    this.isDragging = true;
+                    this.lastX = e.clientX;
+                    this.lastY = e.clientY;
+                    this.canvasContainer.parentElement.style.cursor = 'grabbing';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (this.isDragging) {
+                        const deltaX = e.clientX - this.lastX;
+                        const deltaY = e.clientY - this.lastY;
+                        this.offsetX += deltaX;
+                        this.offsetY += deltaY;
+                        this.lastX = e.clientX;
+                        this.lastY = e.clientY;
+                        this.updateCanvasTransform();
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (this.isDragging) {
+                    this.isDragging = false;
+                        this.canvasContainer.parentElement.style.cursor = 'default';
+                    }
+                });
+
+                // Focus 按钮 - 适配画布
+                document.getElementById('focusCanvas').addEventListener('click', () => {
+                    const widthPt = parseFloat(document.getElementById('pageWidth').value);
+                    const heightPt = parseFloat(document.getElementById('pageHeight').value);
+                    if (widthPt && heightPt) {
+                        this.fitCanvasToView(widthPt, heightPt, true); // 启用动画
+                    }
+                });
+
+                // 缩放按钮 - round to 最近的 ±25%
+                document.getElementById('zoomIn').addEventListener('click', () => {
+                    this.zoomToNearest25(1); // +1 表示向上
+                });
+
+                document.getElementById('zoomOut').addEventListener('click', () => {
+                    this.zoomToNearest25(-1); // -1 表示向下
+                });
+
+                // 缩放输入框
+                const zoomInput = document.getElementById('zoomDisplay');
+                
+                // 限制只能输入数字
+                zoomInput.addEventListener('keydown', (e) => {
+                    this.restrictToNumbers(e, true); // true 表示允许小数点
+                });
+                
+                // 限制粘贴内容
+                zoomInput.addEventListener('paste', (e) => {
+                    this.handleNumberPaste(e);
+                });
+                
+                zoomInput.addEventListener('change', (e) => {
+                    this.handleZoomInput(e.target.value);
+                });
+                
+                zoomInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleZoomInput(e.target.value);
+                        e.target.blur();
+                    }
+                });
+
+                // 控制面板交互
+                this.setupControlPanel();
+            }
+
+            zoomToNearest25(direction) {
+                const currentPercent = this.scale * 100;
+                let targetPercent;
+                
+                if (direction > 0) {
+                    // 向上 round：找到下一个 25 的倍数
+                    targetPercent = Math.ceil(currentPercent / 25) * 25;
+                    // 如果当前已经是 25 的倍数，就加 25
+                    if (targetPercent === currentPercent) {
+                        targetPercent += 25;
+                    }
+                    // 限制范围
+                    targetPercent = Math.max(5, Math.min(500, targetPercent));
+                    this.scale = targetPercent / 100;
+                    this.updateCanvasTransform(true); // 启用动画
+                    this.updateZoomDisplay();
+                } else {
+                    // 向下 round：找到上一个 25 的倍数
+                    targetPercent = Math.floor(currentPercent / 25) * 25;
+                    // 如果当前已经是 25 的倍数，就减 25
+                    if (targetPercent === currentPercent) {
+                        targetPercent -= 25;
+                    }
+                    
+                    // 如果要缩小到 25% 以下，检查画布是否能完全展示
+                    if (targetPercent < 25) {
+                        // 获取当前画布尺寸
+                        const widthPt = parseFloat(document.getElementById('pageWidth').value);
+                        const heightPt = parseFloat(document.getElementById('pageHeight').value);
+                        
+                        if (widthPt && heightPt) {
+                            // 计算能完全展示画布的缩放比例
+                            const canvasWidthPx = this.ptToPx(widthPt);
+                            const canvasHeightPx = this.ptToPx(heightPt);
+                            const canvasArea = this.canvasContainer.parentElement;
+                            const areaWidth = canvasArea.clientWidth;
+                            const areaHeight = canvasArea.clientHeight;
+                            const margin = 20;
+                            const availableWidth = areaWidth - margin * 2;
+                            const availableHeight = areaHeight - margin * 2;
+                            const scaleX = availableWidth / canvasWidthPx;
+                            const scaleY = availableHeight / canvasHeightPx;
+                            const fitScale = Math.min(scaleX, scaleY, 3);
+                            const fitPercent = fitScale * 100;
+                            
+                            // 如果在 25% 时画布还不能完全展示，就直接跳到适配比例
+                            if (fitPercent < 25) {
+                                this.scale = fitScale;
+                                this.offsetX = 0;
+                                this.offsetY = 0;
+                                this.updateCanvasTransform(true); // 启用动画
+                                this.updateZoomDisplay();
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // 否则正常缩小到目标百分比
+                    targetPercent = Math.max(5, Math.min(500, targetPercent));
+                    this.scale = targetPercent / 100;
+                    this.updateCanvasTransform(true); // 启用动画
+                    this.updateZoomDisplay();
+                }
+            }
+
+            handleZoomInput(value) {
+                // 移除 % 符号并解析数字
+                const numValue = parseFloat(value.replace('%', ''));
+                if (!isNaN(numValue) && numValue > 0) {
+                    // 限制范围 5% - 500%
+                    this.scale = Math.max(0.05, Math.min(5, numValue / 100));
+                    this.updateCanvasTransform(true); // 启用动画
+                }
+                this.updateZoomDisplay();
+            }
+
+            updateZoomDisplay() {
+                const zoomPercent = Math.round(this.scale * 100);
+                document.getElementById('zoomDisplay').value = zoomPercent + '%';
+            }
+
+            setupCanvas() {
+                // 设置初始画布大小
+                this.updateCanvasSize();
+                // 初始化缩放显示
+                this.updateZoomDisplay();
+                // 初始化 module 选项
+                this.updateModuleOptions();
+                // 初始化 margin 显示
+                this.updateCanvasMargins();
+                // 初始化 margin 按钮状态
+                this.updateMarginButtonsState();
+            }
+
+            // 将pt转换为px用于计算显示尺寸 (1pt = 4/3 px)
+            ptToPx(pt) {
+                return pt * 4 / 3;
+            }
+
+            // 质因数分解 - 返回 [(prime, power), ...] 格式
+            getPrimeFactorization(n) {
+                if (n < 2) return [];
+                
+                const factors = [];
+                
+                // 分解出所有的2
+                let count = 0;
+                while (n % 2 === 0) {
+                    count++;
+                    n = Math.floor(n / 2);
+                }
+                if (count > 0) {
+                    factors.push([2, count]);
+                }
+                
+                // 分解奇数质因数
+                let p = 3;
+                while (p * p <= n) {
+                    count = 0;
+                    while (n % p === 0) {
+                        count++;
+                        n = Math.floor(n / p);
+                    }
+                    if (count > 0) {
+                        factors.push([p, count]);
+                    }
+                    p += 2;
+                }
+                
+                // 如果剩余的n > 1，说明它本身是质数
+                if (n > 1) {
+                    factors.push([n, 1]);
+                }
+                
+                return factors;
+            }
+
+            // 获取质因数列表（不带 power）
+            getPrimeFactors(n) {
+                const factorization = this.getPrimeFactorization(n);
+                const factors = [];
+                for (const [prime, power] of factorization) {
+                    for (let i = 0; i < power; i++) {
+                        factors.push(prime);
+                    }
+                }
+                return factors;
+            }
+
+            // 找到两个数的共同质因数
+            findCommonPrimeFactors(x, y) {
+                const xFactors = this.getPrimeFactors(x);
+                const yFactors = this.getPrimeFactors(y);
+                
+                // 找到共同的质因数（去重）
+                const commonFactors = [];
+                const ySet = new Set(yFactors);
+                
+                for (const factor of xFactors) {
+                    if (ySet.has(factor) && !commonFactors.includes(factor)) {
+                        commonFactors.push(factor);
+                    }
+                }
+                
+                return commonFactors.sort((a, b) => a - b);
+            }
+
+            // 更新 module 选项
+            updateModuleOptions() {
+                const width = parseInt(document.getElementById('pageWidth').value);
+                const height = parseInt(document.getElementById('pageHeight').value);
+                
+                if (!width || !height || width < 2 || height < 2) {
+                    this.moduleOptions = [];
+                    this.updateModuleUI();
+                    return;
+                }
+                
+                // 找到共同的质因数
+                this.moduleOptions = this.findCommonPrimeFactors(width, height);
+                
+                console.log(`Width: ${width}, Height: ${height}`);
+                console.log(`Common prime factors: ${this.moduleOptions.join(', ')}`);
+                
+                this.updateModuleUI();
+            }
+
+            // 更新 module UI
+            updateModuleUI() {
+                const slider = document.getElementById('moduleSlider');
+                const display = document.getElementById('moduleDisplay');
+                
+                if (this.moduleOptions.length === 0) {
+                    slider.disabled = true;
+                    slider.min = 0;
+                    slider.max = 0;
+                    slider.value = 0;
+                    display.value = '-';
+                    this.currentModule = null;
+                } else {
+                    slider.disabled = false;
+                    slider.min = 0;
+                    slider.max = this.moduleOptions.length - 1;
+                    slider.value = 0;
+                    this.currentModule = this.moduleOptions[0];
+                    display.value = this.currentModule;
+                }
+                
+                // 更新 grid size 选项
+                this.updateGridSizeOptions();
+            }
+
+            // 计算 grid size 选项
+            calculateGridSizeOptions() {
+                if (!this.currentModule) {
+                    return [];
+                }
+
+                const width = parseInt(document.getElementById('pageWidth').value);
+                const height = parseInt(document.getElementById('pageHeight').value);
+                const m = this.currentModule;
+
+                if (!width || !height || width < 2 || height < 2) {
+                    return [];
+                }
+
+                // 获取 x 和 y 的质因数分解
+                const xFactorization = this.getPrimeFactorization(width);
+                const yFactorization = this.getPrimeFactorization(height);
+
+                // 从 x 和 y 的质因数分解中除去一个 m
+                const xRemainder = this.removeFactorFromFactorization(xFactorization, m);
+                const yRemainder = this.removeFactorFromFactorization(yFactorization, m);
+
+                // 合并 x 和 y 的剩余因数，得到所有可用的质因数（取最小power）
+                const availableFactors = this.mergeFactorizations(xRemainder, yRemainder);
+
+                // 生成所有可能的因数组合
+                const gridSizes = new Set();
+                
+                // 递归生成所有组合
+                const generateCombinations = (factors, index, current) => {
+                    const value = current * m;
+                    if (value >= 5 && value <= 50) {
+                        gridSizes.add(value);
+                    }
+                    
+                    if (index >= factors.length) {
+                        return;
+                    }
+                    
+                    const [prime, maxPower] = factors[index];
+                    // 不选这个质因数
+                    generateCombinations(factors, index + 1, current);
+                    // 选择这个质因数的不同幂次
+                    for (let power = 1; power <= maxPower; power++) {
+                        generateCombinations(factors, index + 1, current * Math.pow(prime, power));
+                    }
+                };
+                
+                generateCombinations(availableFactors, 0, 1);
+
+                // 转换为排序数组
+                return Array.from(gridSizes).sort((a, b) => a - b);
+            }
+
+            // 从质因数分解中除去一个因子
+            removeFactorFromFactorization(factorization, factor) {
+                const factorFactorization = this.getPrimeFactorization(factor);
+                const result = JSON.parse(JSON.stringify(factorization)); // 深拷贝
+
+                for (const [prime, power] of factorFactorization) {
+                    for (let i = 0; i < result.length; i++) {
+                        if (result[i][0] === prime) {
+                            result[i][1] -= power;
+                            if (result[i][1] <= 0) {
+                                result.splice(i, 1);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                return result;
+            }
+
+            // 合并两个质因数分解，取最小 power（确保 grid size 能同时整除 width 和 height）
+            mergeFactorizations(f1, f2) {
+                const merged = new Map();
+
+                // 先收集所有的质因数
+                for (const [prime, power] of f1) {
+                    merged.set(prime, power);
+                }
+
+                // 对于在两者中都存在的质因数，取最小 power
+                // 对于只在一个中存在的质因数，不包含（因为不能整除另一个）
+                const result = new Map();
+                for (const [prime, power] of f2) {
+                    if (merged.has(prime)) {
+                        result.set(prime, Math.min(merged.get(prime), power));
+                    }
+                }
+
+                return Array.from(result.entries());
+            }
+
+            // 更新 grid size 选项
+            updateGridSizeOptions() {
+                this.gridSizeOptions = this.calculateGridSizeOptions();
+                
+                console.log(`Grid size options: ${this.gridSizeOptions.join(', ')}`);
+                
+                this.updateGridSizeUI();
+            }
+
+            // 更新 grid size UI
+            updateGridSizeUI() {
+                const slider = document.getElementById('gridSizeSlider');
+                const display = document.getElementById('gridSizeDisplay');
+                const oldGridSize = this.currentGridSize;
+                
+                if (this.gridSizeOptions.length === 0) {
+                    slider.disabled = true;
+                    slider.min = 0;
+                    slider.max = 0;
+                    slider.value = 0;
+                    display.value = '-';
+                    this.currentGridSize = null;
+                } else {
+                    slider.disabled = false;
+                    slider.min = 0;
+                    slider.max = this.gridSizeOptions.length - 1;
+                    slider.value = 0;
+                    this.currentGridSize = this.gridSizeOptions[0];
+                    display.value = this.currentGridSize;
+                    this.updateCanvasGrid();
+                }
+                
+                // 如果 grid size 变化了，调整现有的 margin 值到新 grid size 的倍数
+                if (oldGridSize !== this.currentGridSize && this.currentGridSize) {
+                    this.adjustMarginsToGridSize();
+                }
+                
+                // 更新 margin 按钮状态
+                this.updateMarginButtonsState();
+            }
+
+            // 将现有 margin 调整到新 grid size 的倍数
+            adjustMarginsToGridSize() {
+                const gridSize = this.currentGridSize;
+                if (!gridSize) return;
+                
+                ['left', 'right', 'top', 'bottom'].forEach(side => {
+                    const currentValue = this.margins[side];
+                    if (currentValue > 0) {
+                        // 向下取整到最近的 grid size 倍数
+                        const newValue = Math.floor(currentValue / gridSize) * gridSize;
+                        this.margins[side] = newValue;
+                        document.getElementById(`margin${side.charAt(0).toUpperCase() + side.slice(1)}`).value = newValue;
+                    }
+                });
+                
+                this.updateCanvasMargins();
+                console.log(`Margins adjusted to grid size: ${gridSize} pt`);
+            }
+
+            // 更新 margin 按钮的启用/禁用状态
+            updateMarginButtonsState() {
+                const buttons = document.querySelectorAll('.stepper-btn');
+                buttons.forEach(btn => {
+                    btn.disabled = !this.currentGridSize;
+                });
+            }
+
+            // 更新画布上的网格
+            updateCanvasGrid() {
+                const grid = document.querySelector('.canvas-grid');
+                if (!grid) {
+                    return;
+                }
+
+                if (!this.currentGridSize) {
+                    // 如果没有 grid size，隐藏网格
+                    grid.style.opacity = '0';
+                    return;
+                }
+
+                // 显示网格
+                grid.style.opacity = '0.3';
+
+                // 使用 pt 单位直接设置，这样会跟随画布一起缩放
+                grid.style.backgroundSize = `${this.currentGridSize}pt ${this.currentGridSize}pt`;
+                
+                console.log(`Grid updated: ${this.currentGridSize} pt`);
+            }
+
+            updateCanvasTransform(animate = false) {
+                if (animate) {
+                    this.canvasContainer.classList.add('animating');
+                    this.canvasContainer.style.transform = 
+                        `translate(calc(-50% + ${this.offsetX}px), calc(-50% + ${this.offsetY}px)) scale(${this.scale})`;
+                    setTimeout(() => {
+                        this.canvasContainer.classList.remove('animating');
+                    }, 300);
+                } else {
+                    this.canvasContainer.style.transform = 
+                        `translate(calc(-50% + ${this.offsetX}px), calc(-50% + ${this.offsetY}px)) scale(${this.scale})`;
+                }
+            }
+
+            setupControlPanel() {
+                // 页面尺寸控制
+                const widthInput = document.getElementById('pageWidth');
+                const heightInput = document.getElementById('pageHeight');
+                
+                // 限制只能输入数字
+                widthInput.addEventListener('keydown', (e) => {
+                    this.restrictToNumbers(e, true);
+                });
+                
+                heightInput.addEventListener('keydown', (e) => {
+                    this.restrictToNumbers(e, true);
+                });
+                
+                // 限制粘贴内容
+                widthInput.addEventListener('paste', (e) => {
+                    this.handleNumberPaste(e);
+                });
+                
+                heightInput.addEventListener('paste', (e) => {
+                    this.handleNumberPaste(e);
+                });
+                
+                widthInput.addEventListener('input', () => {
+                    this.updateCanvasSize();
+                    
+                    // 重置 column/row 设置（页面尺寸改变影响所有计算）
+                    this.resetColumnRowSettings();
+                    
+                    this.updateModuleOptions();
+                });
+
+                heightInput.addEventListener('input', () => {
+                    this.updateCanvasSize();
+                    
+                    // 重置 column/row 设置（页面尺寸改变影响所有计算）
+                    this.resetColumnRowSettings();
+                    
+                    this.updateModuleOptions();
+                });
+
+                // Module 滑杆控制
+                const moduleSlider = document.getElementById('moduleSlider');
+                moduleSlider.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.value);
+                    if (index >= 0 && index < this.moduleOptions.length) {
+                        this.currentModule = this.moduleOptions[index];
+                        document.getElementById('moduleDisplay').value = this.currentModule;
+                        console.log(`Module set to: ${this.currentModule} pt`);
+                        
+                        // 更新 grid size 选项（不重置 column/row，等 grid size 真正改变时再处理）
+                        this.updateGridSizeOptions();
+                    }
+                });
+
+                // Grid Size 滑杆控制
+                const gridSizeSlider = document.getElementById('gridSizeSlider');
+                gridSizeSlider.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.value);
+                    if (index >= 0 && index < this.gridSizeOptions.length) {
+                        const oldGridSize = this.currentGridSize;
+                        this.currentGridSize = this.gridSizeOptions[index];
+                        document.getElementById('gridSizeDisplay').value = this.currentGridSize;
+                        this.updateCanvasGrid();
+                        
+                        // 调整现有 margin 到新的 grid size 倍数
+                        if (oldGridSize !== this.currentGridSize) {
+                            this.adjustMarginsToGridSize();
+                        }
+                        
+                        // 自适应 column/row spacing
+                        if (!oldGridSize) {
+                            // 如果之前没有 grid size，初始化 spacing
+                            this.initializeColumnRowSpacing();
+                        } else {
+                            // 如果之前有 grid size，调整 spacing 为新 grid size 的倍数
+                            this.adjustColumnRowSpacingToGridSize();
+                        }
+                        
+                        console.log(`Grid size set to: ${this.currentGridSize} pt`);
+                    }
+                });
+
+                // Column Spacing 控制按钮
+                document.getElementById('columnSpacingDown').addEventListener('click', () => {
+                    this.adjustColumnSpacing(-1);
+                });
+                
+                document.getElementById('columnSpacingUp').addEventListener('click', () => {
+                    this.adjustColumnSpacing(1);
+                });
+
+                // Row Spacing 控制按钮
+                document.getElementById('rowSpacingDown').addEventListener('click', () => {
+                    this.adjustRowSpacing(-1);
+                });
+                
+                document.getElementById('rowSpacingUp').addEventListener('click', () => {
+                    this.adjustRowSpacing(1);
+                });
+
+                // Column Number 滑杆控制
+                const columnSlider = document.getElementById('columnSlider');
+                columnSlider.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.value);
+                    if (index >= 0 && index < this.columnOptions.length) {
+                        this.currentColumnNumber = this.columnOptions[index];
+                        document.getElementById('columnDisplay').value = this.currentColumnNumber;
+                        this.drawColumns();
+                        console.log(`Column number set to: ${this.currentColumnNumber}`);
+                    }
+                });
+
+                // Row Number 滑杆控制
+                const rowSlider = document.getElementById('rowSlider');
+                rowSlider.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.value);
+                    if (index >= 0 && index < this.rowOptions.length) {
+                        this.currentRowNumber = this.rowOptions[index];
+                        document.getElementById('rowDisplay').value = this.currentRowNumber;
+                        this.drawRows();
+                        console.log(`Row number set to: ${this.currentRowNumber}`);
+                    }
+                });
+
+                // Margin 控制按钮
+                document.querySelectorAll('.stepper-btn[data-margin]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const margin = e.currentTarget.getAttribute('data-margin');
+                        const dir = parseInt(e.currentTarget.getAttribute('data-dir'));
+                        this.adjustMargin(margin, dir);
+                    });
+                });
+
+                // Margin 锁定按钮
+                document.getElementById('lockHorizontal').addEventListener('click', () => {
+                    this.toggleMarginLock('horizontal');
+                });
+
+                document.getElementById('lockVertical').addEventListener('click', () => {
+                    this.toggleMarginLock('vertical');
+                });
+
+                // 初始化锁定按钮状态
+                this.initMarginLockUI();
+            }
+
+            // 初始化锁定按钮 UI
+            initMarginLockUI() {
+                ['horizontal', 'vertical'].forEach(type => {
+                    const btn = document.getElementById(type === 'horizontal' ? 'lockHorizontal' : 'lockVertical');
+                    const unlockedIcon = btn.querySelector('.icon-unlocked');
+                    const lockedIcon = btn.querySelector('.icon-locked');
+                    
+                    if (this.marginLocks[type]) {
+                        btn.classList.add('locked');
+                        unlockedIcon.style.display = 'none';
+                        lockedIcon.style.display = 'block';
+                    } else {
+                        btn.classList.remove('locked');
+                        unlockedIcon.style.display = 'block';
+                        lockedIcon.style.display = 'none';
+                    }
+                });
+            }
+
+            // 切换 margin 锁定
+            toggleMarginLock(type) {
+                this.marginLocks[type] = !this.marginLocks[type];
+                const btn = document.getElementById(type === 'horizontal' ? 'lockHorizontal' : 'lockVertical');
+                const unlockedIcon = btn.querySelector('.icon-unlocked');
+                const lockedIcon = btn.querySelector('.icon-locked');
+                
+                if (this.marginLocks[type]) {
+                    btn.classList.add('locked');
+                    unlockedIcon.style.display = 'none';
+                    lockedIcon.style.display = 'block';
+                    
+                    // 锁定时，将两个值设为相等（取较大值）
+                    if (type === 'horizontal') {
+                        const maxValue = Math.max(this.margins.left, this.margins.right);
+                        this.margins.left = maxValue;
+                        this.margins.right = maxValue;
+                        document.getElementById('marginLeft').value = maxValue;
+                        document.getElementById('marginRight').value = maxValue;
+                    } else {
+                        const maxValue = Math.max(this.margins.top, this.margins.bottom);
+                        this.margins.top = maxValue;
+                        this.margins.bottom = maxValue;
+                        document.getElementById('marginTop').value = maxValue;
+                        document.getElementById('marginBottom').value = maxValue;
+                    }
+                    this.updateCanvasMargins();
+                } else {
+                    btn.classList.remove('locked');
+                    unlockedIcon.style.display = 'block';
+                    lockedIcon.style.display = 'none';
+                }
+            }
+
+            // 调整 margin
+            adjustMargin(side, direction) {
+                const step = this.currentGridSize || 1;
+                const newValue = Math.max(0, this.margins[side] + (direction * step));
+                this.margins[side] = newValue;
+                
+                // 更新输入框显示
+                document.getElementById(`margin${side.charAt(0).toUpperCase() + side.slice(1)}`).value = newValue;
+                
+                // 检查是否需要联动调整
+                if ((side === 'left' || side === 'right') && this.marginLocks.horizontal) {
+                    const otherSide = side === 'left' ? 'right' : 'left';
+                    this.margins[otherSide] = newValue;
+                    document.getElementById(`margin${otherSide.charAt(0).toUpperCase() + otherSide.slice(1)}`).value = newValue;
+                }
+                
+                if ((side === 'top' || side === 'bottom') && this.marginLocks.vertical) {
+                    const otherSide = side === 'top' ? 'bottom' : 'top';
+                    this.margins[otherSide] = newValue;
+                    document.getElementById(`margin${otherSide.charAt(0).toUpperCase() + otherSide.slice(1)}`).value = newValue;
+                }
+                
+                // 更新画布上的 margin 显示
+                this.updateCanvasMargins();
+                
+                // 更新 column/row 选项（因为 margin 影响可用空间）
+                if (side === 'top' || side === 'bottom') {
+                    this.updateColumnOptions();
+                    // 重新绘制 column 线
+                    if (this.currentColumnNumber) {
+                        this.drawColumns();
+                    }
+                }
+                if (side === 'left' || side === 'right') {
+                    this.updateRowOptions();
+                    // 重新绘制 row 线
+                    if (this.currentRowNumber) {
+                        this.drawRows();
+                    }
+                }
+                
+                console.log(`Margin ${side} set to: ${newValue} pt`);
+            }
+
+            // 更新画布上的 margin 显示
+            updateCanvasMargins() {
+                // 使用 pt 单位，这样会随画布缩放
+                const leftEl = document.getElementById('marginLeftVis');
+                const rightEl = document.getElementById('marginRightVis');
+                const topEl = document.getElementById('marginTopVis');
+                const bottomEl = document.getElementById('marginBottomVis');
+
+                // Left margin - 线在左侧
+                if (this.margins.left > 0) {
+                    leftEl.style.left = `${this.margins.left}pt`;
+                    leftEl.style.opacity = '1';
+                } else {
+                    leftEl.style.opacity = '0';
+                }
+
+                // Right margin - 线在右侧
+                if (this.margins.right > 0) {
+                    rightEl.style.right = `${this.margins.right}pt`;
+                    rightEl.style.opacity = '1';
+                } else {
+                    rightEl.style.opacity = '0';
+                }
+
+                // Top margin - 线在顶部
+                if (this.margins.top > 0) {
+                    topEl.style.top = `${this.margins.top}pt`;
+                    topEl.style.opacity = '1';
+                } else {
+                    topEl.style.opacity = '0';
+                }
+
+                // Bottom margin - 线在底部
+                if (this.margins.bottom > 0) {
+                    bottomEl.style.bottom = `${this.margins.bottom}pt`;
+                    bottomEl.style.opacity = '1';
+                } else {
+                    bottomEl.style.opacity = '0';
+                }
+            }
+
+            // Column/Row 相关方法
+
+            // 找到数组中最接近目标值的元素的索引
+            findNearestIndex(array, target) {
+                if (array.length === 0) return 0;
+                
+                let nearestIndex = 0;
+                let minDiff = Math.abs(array[0] - target);
+                
+                for (let i = 1; i < array.length; i++) {
+                    const diff = Math.abs(array[i] - target);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        nearestIndex = i;
+                    }
+                }
+                
+                return nearestIndex;
+            }
+
+            // 重置 column/row 设置
+            resetColumnRowSettings() {
+                // 重置 spacing
+                this.columnSpacing = null;
+                this.rowSpacing = null;
+                
+                // 重置选项和当前值
+                this.columnOptions = [];
+                this.rowOptions = [];
+                this.currentColumnNumber = null;
+                this.currentRowNumber = null;
+                
+                // 清空画布上的线条
+                const columnContainer = document.getElementById('canvasColumns');
+                const rowContainer = document.getElementById('canvasRows');
+                if (columnContainer) columnContainer.innerHTML = '';
+                if (rowContainer) rowContainer.innerHTML = '';
+                
+                // 重置 UI 显示
+                document.getElementById('columnSpacing').value = '-';
+                document.getElementById('rowSpacing').value = '-';
+                document.getElementById('columnDisplay').value = '-';
+                document.getElementById('rowDisplay').value = '-';
+                
+                const columnSlider = document.getElementById('columnSlider');
+                const rowSlider = document.getElementById('rowSlider');
+                columnSlider.disabled = true;
+                columnSlider.value = 0;
+                rowSlider.disabled = true;
+                rowSlider.value = 0;
+                
+                console.log('Column/Row settings reset');
+            }
+
+            // 初始化 column spacing (默认为 grid size)
+            initializeColumnRowSpacing() {
+                if (this.currentGridSize) {
+                    // 只在还没有设置时才初始化
+                    if (this.columnSpacing === null || this.columnSpacing === undefined) {
+                        this.columnSpacing = this.currentGridSize;
+                    }
+                    if (this.rowSpacing === null || this.rowSpacing === undefined) {
+                        this.rowSpacing = this.currentGridSize;
+                    }
+                    this.updateColumnRowUI();
+                }
+            }
+
+            // 将 column/row spacing 调整为新 grid size 的倍数
+            adjustColumnRowSpacingToGridSize() {
+                if (!this.currentGridSize) return;
+                
+                // 调整 column spacing
+                if (this.columnSpacing !== null && this.columnSpacing !== undefined) {
+                    // 向下取整到最近的 grid size 倍数
+                    const ratio = Math.floor(this.columnSpacing / this.currentGridSize);
+                    this.columnSpacing = Math.max(0, ratio * this.currentGridSize);
+                } else {
+                    this.columnSpacing = this.currentGridSize;
+                }
+                
+                // 调整 row spacing
+                if (this.rowSpacing !== null && this.rowSpacing !== undefined) {
+                    // 向下取整到最近的 grid size 倍数
+                    const ratio = Math.floor(this.rowSpacing / this.currentGridSize);
+                    this.rowSpacing = Math.max(0, ratio * this.currentGridSize);
+                } else {
+                    this.rowSpacing = this.currentGridSize;
+                }
+                
+                // 更新 UI 和选项（这会重新计算可用的 column/row 数量并自动选择最接近的值，并重新绘制线条）
+                this.updateColumnRowUI();
+                
+                console.log(`Column/Row spacing adjusted to grid size: column=${this.columnSpacing}pt, row=${this.rowSpacing}pt`);
+            }
+
+            // 调整 column spacing
+            adjustColumnSpacing(direction) {
+                if (!this.currentGridSize) return;
+                
+                const step = this.currentGridSize;
+                const newValue = Math.max(0, this.columnSpacing + (direction * step));
+                this.columnSpacing = newValue;
+                
+                document.getElementById('columnSpacing').value = newValue;
+                
+                // 重新计算可用的 column 数量
+                this.updateColumnOptions();
+                
+                // 重新绘制（如果当前有选中的 column number）
+                if (this.currentColumnNumber) {
+                    this.drawColumns();
+                }
+                
+                console.log(`Column spacing set to: ${newValue} pt`);
+            }
+
+            // 调整 row spacing
+            adjustRowSpacing(direction) {
+                if (!this.currentGridSize) return;
+                
+                const step = this.currentGridSize;
+                const newValue = Math.max(0, this.rowSpacing + (direction * step));
+                this.rowSpacing = newValue;
+                
+                document.getElementById('rowSpacing').value = newValue;
+                
+                // 重新计算可用的 row 数量
+                this.updateRowOptions();
+                
+                // 重新绘制（如果当前有选中的 row number）
+                if (this.currentRowNumber) {
+                    this.drawRows();
+                }
+                
+                console.log(`Row spacing set to: ${newValue} pt`);
+            }
+
+            // 计算可用的 column 数量（Column 是垂直划分，基于 width）
+            calculateColumnOptions() {
+                if (!this.currentGridSize || this.columnSpacing === null || this.columnSpacing === undefined) {
+                    return [];
+                }
+
+                const x = parseInt(document.getElementById('pageWidth').value);  // width
+                const l = this.margins.left;
+                const r = this.margins.right;
+                const cs = this.columnSpacing;
+                const gridSize = this.currentGridSize;
+
+                const options = [];
+                
+                // 对于 c = 1 到 30，检查 (x - l - r - (c-1) * cs) 是否能被 (grid_size * c) 整除
+                for (let c = 1; c <= 30; c++) {
+                    const available = x - l - r - (c - 1) * cs;
+                    // 必须大于0，且能被 (grid_size * c) 整除
+                    if (available > 0 && available % (gridSize * c) === 0) {
+                        options.push(c);
+                    }
+                }
+
+                return options;
+            }
+
+            // 计算可用的 row 数量（Row 是水平划分，基于 height）
+            calculateRowOptions() {
+                if (!this.currentGridSize || this.rowSpacing === null || this.rowSpacing === undefined) {
+                    return [];
+                }
+
+                const y = parseInt(document.getElementById('pageHeight').value);  // height
+                const t = this.margins.top;
+                const b = this.margins.bottom;
+                const rs = this.rowSpacing;
+                const gridSize = this.currentGridSize;
+
+                const options = [];
+                
+                // 对于 rowNum = 1 到 30，检查 (y - t - b - (rowNum-1) * rs) 是否能被 (grid_size * rowNum) 整除
+                for (let rowNum = 1; rowNum <= 30; rowNum++) {
+                    const available = y - t - b - (rowNum - 1) * rs;
+                    // 必须大于0，且能被 (grid_size * rowNum) 整除
+                    if (available > 0 && available % (gridSize * rowNum) === 0) {
+                        options.push(rowNum);
+                    }
+                }
+
+                return options;
+            }
+
+            // 更新 column 选项
+            updateColumnOptions() {
+                this.columnOptions = this.calculateColumnOptions();
+                
+                console.log(`Column options: ${this.columnOptions.join(', ')}`);
+                
+                this.updateColumnUI();
+            }
+
+            // 更新 row 选项
+            updateRowOptions() {
+                this.rowOptions = this.calculateRowOptions();
+                
+                console.log(`Row options: ${this.rowOptions.join(', ')}`);
+                
+                this.updateRowUI();
+            }
+
+            // 更新 column UI
+            updateColumnUI() {
+                const slider = document.getElementById('columnSlider');
+                const display = document.getElementById('columnDisplay');
+                const previousColumnNumber = this.currentColumnNumber;
+                
+                if (this.columnOptions.length === 0) {
+                    slider.disabled = true;
+                    slider.min = 0;
+                    slider.max = 0;
+                    slider.value = 0;
+                    display.value = '-';
+                    this.currentColumnNumber = null;
+                    this.drawColumns(); // 清空线条
+                } else {
+                    slider.disabled = false;
+                    slider.min = 0;
+                    slider.max = this.columnOptions.length - 1;
+                    
+                    // 尝试保留或找到最接近的选项
+                    let selectedIndex = 0;
+                    if (previousColumnNumber !== null && previousColumnNumber !== undefined) {
+                        // 检查之前的值是否还在选项中
+                        const exactIndex = this.columnOptions.indexOf(previousColumnNumber);
+                        if (exactIndex !== -1) {
+                            // 之前的值还在，直接使用
+                            selectedIndex = exactIndex;
+                        } else {
+                            // 找到最接近的值
+                            selectedIndex = this.findNearestIndex(this.columnOptions, previousColumnNumber);
+                        }
+                    }
+                    
+                    slider.value = selectedIndex;
+                    this.currentColumnNumber = this.columnOptions[selectedIndex];
+                    display.value = this.currentColumnNumber;
+                    this.drawColumns(); // 绘制线条
+                }
+            }
+
+            // 更新 row UI
+            updateRowUI() {
+                const slider = document.getElementById('rowSlider');
+                const display = document.getElementById('rowDisplay');
+                const previousRowNumber = this.currentRowNumber;
+                
+                if (this.rowOptions.length === 0) {
+                    slider.disabled = true;
+                    slider.min = 0;
+                    slider.max = 0;
+                    slider.value = 0;
+                    display.value = '-';
+                    this.currentRowNumber = null;
+                    this.drawRows(); // 清空线条
+                } else {
+                    slider.disabled = false;
+                    slider.min = 0;
+                    slider.max = this.rowOptions.length - 1;
+                    
+                    // 尝试保留或找到最接近的选项
+                    let selectedIndex = 0;
+                    if (previousRowNumber !== null && previousRowNumber !== undefined) {
+                        // 检查之前的值是否还在选项中
+                        const exactIndex = this.rowOptions.indexOf(previousRowNumber);
+                        if (exactIndex !== -1) {
+                            // 之前的值还在，直接使用
+                            selectedIndex = exactIndex;
+                        } else {
+                            // 找到最接近的值
+                            selectedIndex = this.findNearestIndex(this.rowOptions, previousRowNumber);
+                        }
+                    }
+                    
+                    slider.value = selectedIndex;
+                    this.currentRowNumber = this.rowOptions[selectedIndex];
+                    display.value = this.currentRowNumber;
+                    this.drawRows(); // 绘制线条
+                }
+            }
+
+            // 更新 column/row UI（spacing 显示）
+            updateColumnRowUI() {
+                const columnSpacingInput = document.getElementById('columnSpacing');
+                const rowSpacingInput = document.getElementById('rowSpacing');
+                const columnSpacingDownBtn = document.getElementById('columnSpacingDown');
+                const columnSpacingUpBtn = document.getElementById('columnSpacingUp');
+                const rowSpacingDownBtn = document.getElementById('rowSpacingDown');
+                const rowSpacingUpBtn = document.getElementById('rowSpacingUp');
+                
+                if (this.currentGridSize) {
+                    // 使用 !== null 和 !== undefined 来允许 spacing 为 0
+                    columnSpacingInput.value = (this.columnSpacing !== null && this.columnSpacing !== undefined) 
+                        ? this.columnSpacing 
+                        : this.currentGridSize;
+                    rowSpacingInput.value = (this.rowSpacing !== null && this.rowSpacing !== undefined) 
+                        ? this.rowSpacing 
+                        : this.currentGridSize;
+                    columnSpacingDownBtn.disabled = false;
+                    columnSpacingUpBtn.disabled = false;
+                    rowSpacingDownBtn.disabled = false;
+                    rowSpacingUpBtn.disabled = false;
+                    
+                    // 更新 column 和 row 选项
+                    this.updateColumnOptions();
+                    this.updateRowOptions();
+                } else {
+                    columnSpacingInput.value = '-';
+                    rowSpacingInput.value = '-';
+                    columnSpacingDownBtn.disabled = true;
+                    columnSpacingUpBtn.disabled = true;
+                    rowSpacingDownBtn.disabled = true;
+                    rowSpacingUpBtn.disabled = true;
+                }
+            }
+
+            // 绘制 Column 线（纵向，垂直线）- Column 是垂直划分，基于 width
+            drawColumns() {
+                const container = document.getElementById('canvasColumns');
+                container.innerHTML = ''; // 清空之前的线
+                
+                if (!this.currentColumnNumber || this.currentColumnNumber < 1) {
+                    return;
+                }
+
+                const x = parseInt(document.getElementById('pageWidth').value);
+                const l = this.margins.left;
+                const r = this.margins.right;
+                const cs = this.columnSpacing;
+                const c = this.currentColumnNumber;
+                
+                // 计算总的可用宽度（除去左右 margin）
+                const availableWidth = x - l - r;
+                
+                // 计算总的 spacing 宽度
+                const totalSpacing = (c - 1) * cs;
+                
+                // 计算每个 column 的宽度（剩余空间平均分配）
+                const columnWidth = (availableWidth - totalSpacing) / c;
+                
+                let currentLeft = l;
+                
+                // 绘制每个 column 和 spacing（跳过第一条和最后一条线，避免与 margin 重叠）
+                for (let i = 0; i < c; i++) {
+                    // 跳过第一条线（i=0 时，与 left margin 重叠）
+                    // 绘制 column 左侧线
+                    if (i > 0) {
+                        const leftLine = document.createElement('div');
+                        leftLine.className = 'column-line';
+                        leftLine.style.left = `${currentLeft}pt`;
+                        leftLine.style.top = '0';
+                        leftLine.style.bottom = '0';
+                        leftLine.style.width = '2px';
+                        leftLine.style.height = 'auto';
+                        leftLine.style.background = '#00ffff';
+                        container.appendChild(leftLine);
+                    }
+                    
+                    currentLeft += columnWidth;
+                    
+                    // 如果不是最后一个 column，绘制 spacing 的左右边界线
+                    if (i < c - 1) {
+                        // Spacing 左侧线（也是 column 右侧线）
+                        const spacingLeftLine = document.createElement('div');
+                        spacingLeftLine.className = 'column-line';
+                        spacingLeftLine.style.left = `${currentLeft}pt`;
+                        spacingLeftLine.style.top = '0';
+                        spacingLeftLine.style.bottom = '0';
+                        spacingLeftLine.style.width = '2px';
+                        spacingLeftLine.style.height = 'auto';
+                        spacingLeftLine.style.background = '#00ffff';
+                        container.appendChild(spacingLeftLine);
+                        
+                        currentLeft += cs;
+                    }
+                }
+                
+                // 跳过最后一条线（与 right margin 重叠）
+                // 不再绘制 rightLine
+            }
+
+            // 绘制 Row 线（横向，水平线）- Row 是水平划分，基于 height
+            drawRows() {
+                const container = document.getElementById('canvasRows');
+                container.innerHTML = ''; // 清空之前的线
+                
+                if (!this.currentRowNumber || this.currentRowNumber < 1) {
+                    return;
+                }
+
+                const y = parseInt(document.getElementById('pageHeight').value);
+                const t = this.margins.top;
+                const b = this.margins.bottom;
+                const rs = this.rowSpacing;
+                const rowNum = this.currentRowNumber;
+                
+                // 计算总的可用高度（除去上下 margin）
+                const availableHeight = y - t - b;
+                
+                // 计算总的 spacing 高度
+                const totalSpacing = (rowNum - 1) * rs;
+                
+                // 计算每个 row 的高度（剩余空间平均分配）
+                const rowHeight = (availableHeight - totalSpacing) / rowNum;
+                
+                let currentTop = t;
+                
+                // 绘制每个 row 和 spacing（跳过第一条和最后一条线，避免与 margin 重叠）
+                for (let i = 0; i < rowNum; i++) {
+                    // 跳过第一条线（i=0 时，与 top margin 重叠）
+                    // 绘制 row 顶部线
+                    if (i > 0) {
+                        const topLine = document.createElement('div');
+                        topLine.className = 'row-line';
+                        topLine.style.top = `${currentTop}pt`;
+                        topLine.style.left = '0';
+                        topLine.style.right = '0';
+                        topLine.style.height = '2px';
+                        topLine.style.width = 'auto';
+                        topLine.style.background = '#00ffff';
+                        container.appendChild(topLine);
+                    }
+                    
+                    currentTop += rowHeight;
+                    
+                    // 如果不是最后一个 row，绘制 spacing 的上下边界线
+                    if (i < rowNum - 1) {
+                        // Spacing 顶部线（也是 row 底部线）
+                        const spacingTopLine = document.createElement('div');
+                        spacingTopLine.className = 'row-line';
+                        spacingTopLine.style.top = `${currentTop}pt`;
+                        spacingTopLine.style.left = '0';
+                        spacingTopLine.style.right = '0';
+                        spacingTopLine.style.height = '2px';
+                        spacingTopLine.style.width = 'auto';
+                        spacingTopLine.style.background = '#00ffff';
+                        container.appendChild(spacingTopLine);
+                        
+                        currentTop += rs;
+                    }
+                }
+                
+                // 跳过最后一条线（与 bottom margin 重叠）
+                // 不再绘制 bottomLine
+            }
+
+            restrictToNumbers(e, allowDecimal = false) {
+                // 允许的按键：数字、退格、删除、方向键、Tab、Enter
+                const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter', 'Home', 'End'];
+                
+                // 允许 Ctrl/Cmd + A, C, V, X (全选、复制、粘贴、剪切)
+                if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) {
+                    return;
+                }
+                
+                // 如果是允许的按键，直接通过
+                if (allowedKeys.includes(e.key)) {
+                    return;
+                }
+                
+                // 检查是否是数字
+                if (e.key >= '0' && e.key <= '9') {
+                    return;
+                }
+                
+                // 如果允许小数点，检查小数点
+                if (allowDecimal && e.key === '.') {
+                    // 确保只有一个小数点
+                    if (!e.target.value.includes('.')) {
+                        return;
+                    }
+                }
+                
+                // 阻止其他所有按键
+                e.preventDefault();
+            }
+
+            handleNumberPaste(e) {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                // 移除所有非数字字符（保留数字和小数点）
+                const cleanedText = pastedText.replace(/[^0-9.]/g, '');
+                // 确保只有一个小数点
+                const parts = cleanedText.split('.');
+                const finalText = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : cleanedText;
+                
+                if (finalText) {
+                    // 插入清理后的文本
+                    const input = e.target;
+                    const start = input.selectionStart;
+                    const end = input.selectionEnd;
+                    const currentValue = input.value;
+                    input.value = currentValue.substring(0, start) + finalText + currentValue.substring(end);
+                    // 设置光标位置
+                    const newPosition = start + finalText.length;
+                    input.setSelectionRange(newPosition, newPosition);
+                    // 触发 input 事件以更新画布
+                    input.dispatchEvent(new Event('input'));
+                }
+            }
+
+            updateCanvasSize() {
+                const widthPt = parseFloat(document.getElementById('pageWidth').value);
+                const heightPt = parseFloat(document.getElementById('pageHeight').value);
+                
+                if (widthPt && heightPt) {
+                    // 使用pt单位设置CSS样式
+                    this.canvas.style.width = widthPt + 'pt';
+                    this.canvas.style.height = heightPt + 'pt';
+                    
+                    // 自动适配缩放（传入pt值，函数内部会转换，启用动画）
+                    this.fitCanvasToView(widthPt, heightPt, true);
+                    
+                    console.log(`画布大小已更新: ${widthPt}pt × ${heightPt}pt`);
+                }
+            }
+
+            fitCanvasToView(canvasWidthPt, canvasHeightPt, animate = false) {
+                // 将pt转换为px用于计算
+                const canvasWidthPx = this.ptToPx(canvasWidthPt);
+                const canvasHeightPx = this.ptToPx(canvasHeightPt);
+                
+                // 获取画布显示区域的尺寸（px）
+                const canvasArea = this.canvasContainer.parentElement;
+                const areaWidth = canvasArea.clientWidth;
+                const areaHeight = canvasArea.clientHeight;
+                
+                // 留出边距 (margin, in px)
+                const margin = 25;
+                const availableWidth = areaWidth - margin * 2;
+                const availableHeight = areaHeight - margin * 2;
+                
+                // 计算缩放比例，让长边适配到显示区域
+                const scaleX = availableWidth / canvasWidthPx;
+                const scaleY = availableHeight / canvasHeightPx;
+                this.scale = Math.min(scaleX, scaleY);  // 取较小的比例确保画布完全可见
+                
+                // 限制最大缩放比例，避免过度放大
+                this.scale = Math.min(this.scale, 3);
+                // 限制最小缩放比例
+                this.scale = Math.max(this.scale, 0.05);
+                
+                // 重置偏移，让画布居中
+                this.offsetX = 0;
+                this.offsetY = 0;
+                
+                // 更新 transform 和 zoom display
+                this.updateCanvasTransform(animate);
+                this.updateZoomDisplay();
+                
+                console.log(`自动适配: 画布 ${canvasWidthPt}pt × ${canvasHeightPt}pt, 缩放比例 = ${(this.scale * 100).toFixed(1)}%`);
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new GriDesigner();
+        });
+    </script>
+</body>
+</html>

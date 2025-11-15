@@ -799,8 +799,8 @@
                         </div>
                     </div>
 
-                    <!-- Module Section -->
-                    <div class="section">
+                    <!-- Module Section - Hidden (logic integrated into Grid Size) -->
+                    <div class="section" style="display: none;">
                         <div class="section-title">Module</div>
                         <div class="input-row">
                             <input type="range" class="slider" id="moduleSlider" min="0" max="0" value="0" step="1">
@@ -1303,6 +1303,7 @@
                 const slider = document.getElementById('moduleSlider');
                 const display = document.getElementById('moduleDisplay');
                 
+                // Module UI 已隐藏，但保留逻辑以便兼容
                 if (this.moduleOptions.length === 0) {
                     slider.disabled = true;
                     slider.min = 0;
@@ -1319,62 +1320,65 @@
                     display.value = this.currentModule;
                 }
                 
-                // 更新 grid size 选项
+                // 更新 grid size 选项（现在会计算所有可能的 module）
                 this.updateGridSizeOptions();
             }
 
-            // 计算 grid size 选项
+            // 计算 grid size 选项 - 遍历所有可能的 module
             calculateGridSizeOptions() {
-                if (!this.currentModule) {
-                    return [];
-                }
-
                 const width = parseInt(document.getElementById('pageWidth').value);
                 const height = parseInt(document.getElementById('pageHeight').value);
-                const m = this.currentModule;
 
                 if (!width || !height || width < 2 || height < 2) {
                     return [];
                 }
 
-                // 获取 x 和 y 的质因数分解
-                const xFactorization = this.getPrimeFactorization(width);
-                const yFactorization = this.getPrimeFactorization(height);
+                // 如果没有可用的 module，返回空数组
+                if (!this.moduleOptions || this.moduleOptions.length === 0) {
+                    return [];
+                }
 
-                // 从 x 和 y 的质因数分解中除去一个 m
-                const xRemainder = this.removeFactorFromFactorization(xFactorization, m);
-                const yRemainder = this.removeFactorFromFactorization(yFactorization, m);
+                // 合并所有 module 对应的 grid size
+                const allGridSizes = new Set();
 
-                // 合并 x 和 y 的剩余因数，得到所有可用的质因数（取最小power）
-                const availableFactors = this.mergeFactorizations(xRemainder, yRemainder);
+                // 遍历所有可能的 module
+                for (const m of this.moduleOptions) {
+                    // 获取 x 和 y 的质因数分解
+                    const xFactorization = this.getPrimeFactorization(width);
+                    const yFactorization = this.getPrimeFactorization(height);
 
-                // 生成所有可能的因数组合
-                const gridSizes = new Set();
-                
-                // 递归生成所有组合
-                const generateCombinations = (factors, index, current) => {
-                    const value = current * m;
-                    if (value >= 5 && value <= 50) {
-                        gridSizes.add(value);
-                    }
+                    // 从 x 和 y 的质因数分解中除去一个 m
+                    const xRemainder = this.removeFactorFromFactorization(xFactorization, m);
+                    const yRemainder = this.removeFactorFromFactorization(yFactorization, m);
+
+                    // 合并 x 和 y 的剩余因数，得到所有可用的质因数（取最小power）
+                    const availableFactors = this.mergeFactorizations(xRemainder, yRemainder);
+
+                    // 递归生成所有组合
+                    const generateCombinations = (factors, index, current) => {
+                        const value = current * m;
+                        if (value >= 5 && value <= 50) {
+                            allGridSizes.add(value);
+                        }
+                        
+                        if (index >= factors.length) {
+                            return;
+                        }
+                        
+                        const [prime, maxPower] = factors[index];
+                        // 不选这个质因数
+                        generateCombinations(factors, index + 1, current);
+                        // 选择这个质因数的不同幂次
+                        for (let power = 1; power <= maxPower; power++) {
+                            generateCombinations(factors, index + 1, current * Math.pow(prime, power));
+                        }
+                    };
                     
-                    if (index >= factors.length) {
-                        return;
-                    }
-                    
-                    const [prime, maxPower] = factors[index];
-                    // 不选这个质因数
-                    generateCombinations(factors, index + 1, current);
-                    // 选择这个质因数的不同幂次
-                    for (let power = 1; power <= maxPower; power++) {
-                        generateCombinations(factors, index + 1, current * Math.pow(prime, power));
-                    }
-                };
-                
-                generateCombinations(availableFactors, 0, 1);
+                    generateCombinations(availableFactors, 0, 1);
+                }
 
                 // 转换为排序数组
-                return Array.from(gridSizes).sort((a, b) => a - b);
+                return Array.from(allGridSizes).sort((a, b) => a - b);
             }
 
             // 从质因数分解中除去一个因子
@@ -1422,7 +1426,8 @@
             updateGridSizeOptions() {
                 this.gridSizeOptions = this.calculateGridSizeOptions();
                 
-                console.log(`Grid size options: ${this.gridSizeOptions.join(', ')}`);
+                console.log(`Available modules: ${this.moduleOptions.join(', ')}`);
+                console.log(`Grid size options (combined from all modules): ${this.gridSizeOptions.join(', ')}`);
                 
                 this.updateGridSizeUI();
             }

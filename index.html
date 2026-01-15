@@ -6,6 +6,28 @@
     <title>Gri-Designer</title>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        /* Design Tokens - 基于 Figma 设计规范 */
+        :root {
+            /* Typography - Font Sizes (Figma pt → Web px, 视觉校准) */
+            --font-size-section-title: 16px;  /* Figma 20pt → 22px */
+            --font-size-label: 14px;          /* Figma 16pt → 17px */
+            
+            /* Typography - Line Heights */
+            --line-height-title: 1.3;
+            --line-height-body: 1.5;
+            
+            /* Typography - Font Weights */
+            --font-weight-medium: 500;        /* Urbanist Medium */
+            --font-weight-semibold: 600;      /* Urbanist SemiBold */
+            
+            /* Spacing */
+            --spacing-section: 36px;          /* Figma 34pt → 36px (区块间距) */
+            --gutter: 14px;                   /* Canvas 和 Control Panel 之间的间隙 */
+            
+            /* Control Heights */
+            --control-height: 28px;           /* Figma 24pt → 28px (输入框高度) */
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -243,7 +265,7 @@
         /* 主内容区域 */
         .main-content {
             display: flex;
-            gap: 20px;
+            gap: var(--gutter);
             height: 100vh;
             margin: 0;
             padding: 15pt 20px 15pt 20px;
@@ -260,7 +282,7 @@
 
         /* 左侧画布区域 */
         .canvas-area {
-            flex: 1;
+            flex: 5;
             background: #e5e5e5;
             border-radius: 8px;
             position: relative;
@@ -367,19 +389,19 @@
 
         /* 右侧控制面板 */
         .control-panel {
-            width: 500px;
-            flex-shrink: 0;
+            flex: 2;
             overflow-y: auto;
         }
 
         .section {
-            margin-bottom: 32px;
+            margin-bottom: var(--spacing-section);
         }
 
         .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
+            font-size: var(--font-size-section-title);
+            font-weight: var(--font-weight-medium);
+            line-height: var(--line-height-title);
+            color: #000000;
             margin-bottom: 16px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -398,7 +420,9 @@
         }
 
         .label {
-            font-size: 14px;
+            font-size: var(--font-size-label);
+            font-weight: var(--font-weight-semibold);
+            line-height: var(--line-height-body);
             color: #666;
             min-width: 60px;
             transition: color 0.3s ease;
@@ -406,10 +430,12 @@
 
         .input {
             flex: 1;
-            padding: 8px 12px;
+            height: var(--control-height);
+            padding: 0 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+            line-height: var(--line-height-body);
             font-family: 'Urbanist', sans-serif;
             transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
@@ -503,9 +529,10 @@
         }
 
         .margin-control .label {
-            font-size: 14px;
+            font-size: var(--font-size-label);
+            font-weight: var(--font-weight-semibold);
+            line-height: var(--line-height-body);
             color: #666;
-            font-weight: 500;
             transition: color 0.3s ease;
         }
 
@@ -516,7 +543,7 @@
         .stepper {
             display: flex;
             align-items: stretch;
-            height: 32px;
+            height: var(--control-height);
             border: 1px solid #ddd;
             border-radius: 6px;
             overflow: hidden;
@@ -525,7 +552,7 @@
         }
 
         .stepper-btn {
-            flex: 0 0 32px;
+            flex: 0 0 var(--control-height);
             border: none;
             background: white;
             cursor: pointer;
@@ -835,12 +862,12 @@
                     <div class="section">
                         <div class="section-title">Page Size</div>
                         <div class="input-row">
-                            <span class="label">Width</span>
+                            <span class="label">WIDTH</span>
                             <input type="number" class="input" id="pageWidth" value="792" min="50" max="2000" step="1">
                             <span class="unit">pt</span>
                         </div>
                         <div class="input-row">
-                            <span class="label">Height</span>
+                            <span class="label">HEIGHT</span>
                             <input type="number" class="input" id="pageHeight" value="1224" min="50" max="2000" step="1">
                             <span class="unit">pt</span>
                         </div>

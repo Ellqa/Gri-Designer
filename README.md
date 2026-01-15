@@ -79,7 +79,7 @@ We're continuously working to enhance Gri-Designer. Here's what's on our roadmap
 ### Planned Features
 
 - [ ] **Import/Export Functionality**  
-  Save and load grid configurations, export specifications as PDF or structured data files
+  Save and load grid configurations, export specifications as SVG or structured data files
 
 - [ ] **Text Input Support**  
   Add text elements to visualize how content flows within your grid system
